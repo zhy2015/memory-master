@@ -1,0 +1,6 @@
+{
+  "name": "memory-master",
+  "version": "1.0.0",
+  "description": "Unified memory management hub for OpenClaw agents.",
+  "dependencies": {}
+}

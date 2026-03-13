@@ -1,4 +1,4 @@
-# Memory Master (zhy2015/memory-architect)
+# Memory Master (zhy2015/memory-master)
 
 A unified memory management skill for OpenClaw agents. This skill consolidates the functionalities of memory archiving, deduplication, and distillation into a single, efficient tool.
 

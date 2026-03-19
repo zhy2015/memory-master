@@ -4,6 +4,7 @@ from .registry import ActionRegistry
 from .adapters import build_memory_registry, export_memory_actions
 from .persistence import WorkflowRunStore
 from .uri import SkillURIRegistry
+from .validation import PipelineValidationError, validate_pipeline_data
 
 __all__ = [
     "WorkflowContext",
@@ -19,4 +20,6 @@ __all__ = [
     "export_memory_actions",
     "WorkflowRunStore",
     "SkillURIRegistry",
+    "PipelineValidationError",
+    "validate_pipeline_data",
 ]

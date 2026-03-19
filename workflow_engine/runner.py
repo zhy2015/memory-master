@@ -15,10 +15,12 @@ if str(ROOT) not in sys.path:
 
 from memory_master import MemoryMaster
 from workflow_engine import WorkflowEngine, WorkflowNode, WorkflowPipeline, WorkflowRunStore, build_memory_registry
+from workflow_engine.validation import validate_pipeline_data
 
 
 def load_pipeline(path: str | Path) -> WorkflowPipeline:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
+    validate_pipeline_data(data)
     pipeline = WorkflowPipeline(data["pipeline_id"], data.get("name", data["pipeline_id"]))
     for node in data.get("nodes", []):
         pipeline.add_node(

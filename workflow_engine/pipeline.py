@@ -68,10 +68,18 @@ class WorkflowEngine:
         self._callbacks.append(callback)
 
     async def execute(self, pipeline: WorkflowPipeline, *, resume: bool = False) -> Dict[str, Any]:
+        run_id = None
         if resume and self.run_store is not None:
             self._resume_pipeline_state(pipeline)
+            try:
+                run_id = self.run_store.load_pipeline_state(pipeline.pipeline_id).get("run_id")
+            except FileNotFoundError:
+                run_id = None
         if self.run_store is not None:
-            self.run_store.save_pipeline_state(pipeline, event="started" if not resume else "resumed")
+            meta = {"run_id": run_id} if run_id else {}
+            self.run_store.save_pipeline_state(pipeline, event="started" if not resume else "resumed", extra=meta)
+            if not run_id:
+                run_id = self.run_store.load_pipeline_state(pipeline.pipeline_id).get("run_id")
         order = self._topological_sort(pipeline)
         for node_id in order:
             node = pipeline.nodes[node_id]
@@ -88,14 +96,14 @@ class WorkflowEngine:
                 if asyncio.iscoroutine(maybe):
                     asyncio.create_task(maybe)
             if self.run_store is not None:
-                self.run_store.save_pipeline_state(pipeline, event=f"node_complete:{node_id}", extra=payload)
+                self.run_store.save_pipeline_state(pipeline, event=f"node_complete:{node_id}", extra={**payload, "run_id": run_id})
             if node.status == NodeStatus.FAILED:
                 if self.run_store is not None:
-                    self.run_store.save_pipeline_state(pipeline, event="failed", extra={"node_id": node_id, "error": node.error})
+                    self.run_store.save_pipeline_state(pipeline, event="failed", extra={"node_id": node_id, "error": node.error, "run_id": run_id})
                 raise RuntimeError(f"Pipeline failed at node {node_id}: {node.error}")
         result = {nid: node.result for nid, node in pipeline.nodes.items() if node.status == NodeStatus.SUCCESS}
         if self.run_store is not None:
-            self.run_store.save_pipeline_state(pipeline, event="completed", extra={"result": result})
+            self.run_store.save_pipeline_state(pipeline, event="completed", extra={"result": result, "run_id": run_id})
         return result
 
 

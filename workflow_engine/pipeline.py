@@ -125,8 +125,24 @@ class WorkflowEngine:
                 else:
                     kwargs[param] = await self.context.get(f"{source_node_id}.{output_key}")
             else:
-                kwargs[param] = source
+                kwargs[param] = self._coerce_literal(source)
         return kwargs
+
+    @staticmethod
+    def _coerce_literal(value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        lowered = value.strip().lower()
+        if lowered == "true":
+            return True
+        if lowered == "false":
+            return False
+        try:
+            if "." in value:
+                return float(value)
+            return int(value)
+        except ValueError:
+            return value
 
 
 async def run_pipeline(pipeline: WorkflowPipeline, actions: Dict[str, ActionHandler]) -> Dict[str, Any]:

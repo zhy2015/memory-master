@@ -61,7 +61,7 @@ class WorkflowEngine:
         uri_registry: Optional[SkillURIRegistry] = None,
     ):
         self.actions = actions
-        self.context = context or get_context()
+        self.context = context or get_context(thread_safe=False)
         self.run_store = run_store
         self.uri_registry = uri_registry or SkillURIRegistry(actions)
         self._callbacks: List[Callable[[str, Dict[str, Any]], Awaitable[None] | None]] = []

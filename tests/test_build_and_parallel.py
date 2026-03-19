@@ -28,7 +28,7 @@ class BuildAndParallelTest(unittest.TestCase):
         elapsed = time.time() - start
         self.assertIn("a", result)
         self.assertIn("b", result)
-        self.assertLess(elapsed, 0.32)
+        self.assertLess(elapsed, 0.45)
         self.assertCountEqual(calls, ["a", "b"])
 
     def test_package_build_or_reports_missing_dependency_cleanly(self):

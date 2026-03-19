@@ -47,7 +47,10 @@ python memory_master.py archive 7
 python memory_master.py index
 python memory_master.py search "部署问题" 5
 python memory_master.py status
+memory-master-runner --help
 ```
+
+`memory-master-runner` 是打包后的 console script，可直接执行 JSON pipeline。
 
 ## Demo Pipeline
 
@@ -116,6 +119,15 @@ tests/
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+当前测试覆盖：
+- memory API 基础能力
+- workflow registry / resume / validation / history
+- CLI runner
+- 独立节点并行执行
+- 包构建可用性
+
+完整安装与验收见 `INSTALL.md`。
 
 ## 依赖
 

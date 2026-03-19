@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from .context import WorkflowContext, get_context
+from .uri import SkillURIRegistry
 
 ActionHandler = Callable[..., Dict[str, Any]]
 
@@ -53,21 +54,27 @@ class WorkflowEngine:
         actions: Dict[str, ActionHandler],
         context: Optional[WorkflowContext] = None,
         run_store: Optional[object] = None,
+        uri_registry: Optional[SkillURIRegistry] = None,
     ):
         self.actions = actions
         self.context = context or get_context()
         self.run_store = run_store
+        self.uri_registry = uri_registry or SkillURIRegistry(actions)
         self._callbacks: List[Callable[[str, Dict[str, Any]], Awaitable[None] | None]] = []
 
     def on_node_complete(self, callback: Callable[[str, Dict[str, Any]], Awaitable[None] | None]):
         self._callbacks.append(callback)
 
-    async def execute(self, pipeline: WorkflowPipeline) -> Dict[str, Any]:
+    async def execute(self, pipeline: WorkflowPipeline, *, resume: bool = False) -> Dict[str, Any]:
+        if resume and self.run_store is not None:
+            self._resume_pipeline_state(pipeline)
         if self.run_store is not None:
-            self.run_store.save_pipeline_state(pipeline, event="started")
+            self.run_store.save_pipeline_state(pipeline, event="started" if not resume else "resumed")
         order = self._topological_sort(pipeline)
         for node_id in order:
             node = pipeline.nodes[node_id]
+            if resume and node.status == NodeStatus.SUCCESS:
+                continue
             await self._execute_node(node, pipeline)
             payload = {
                 "status": node.status.value,
@@ -88,6 +95,28 @@ class WorkflowEngine:
         if self.run_store is not None:
             self.run_store.save_pipeline_state(pipeline, event="completed", extra={"result": result})
         return result
+
+
+    def _resume_pipeline_state(self, pipeline: WorkflowPipeline) -> None:
+        if self.run_store is None:
+            return
+        try:
+            saved = self.run_store.load_pipeline_state(pipeline.pipeline_id)
+        except FileNotFoundError:
+            return
+        saved_nodes = saved.get("pipeline", {}).get("nodes", {})
+        for node_id, node_data in saved_nodes.items():
+            if node_id not in pipeline.nodes:
+                continue
+            node = pipeline.nodes[node_id]
+            status = node_data.get("status")
+            if status == NodeStatus.SUCCESS.value:
+                node.status = NodeStatus.SUCCESS
+                node.result = node_data.get("result", {})
+            elif status == NodeStatus.RUNNING.value:
+                node.status = NodeStatus.PENDING
+                node.result = {}
+                node.error = None
 
     def _topological_sort(self, pipeline: WorkflowPipeline) -> List[str]:
         in_degree = {node_id: 0 for node_id in pipeline.nodes}
@@ -111,9 +140,8 @@ class WorkflowEngine:
         node.status = NodeStatus.RUNNING
         try:
             kwargs = await self._resolve_inputs(node, pipeline)
-            if node.action not in self.actions:
-                raise KeyError(f"Unknown action: {node.action}")
-            result = self.actions[node.action](**kwargs) or {}
+            handler = self.uri_registry.resolve(node.action)
+            result = handler(**kwargs) or {}
             if not isinstance(result, dict):
                 result = {"value": result}
             for key in node.outputs:

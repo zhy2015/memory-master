@@ -32,11 +32,11 @@ async def main() -> None:
 
         pipeline = (
             WorkflowPipeline("memory-demo", "memory demo")
-            .add_node(WorkflowNode("write_log", "write", inputs={"content": "LEARNED: workflow demos make adoption easier"}, outputs=["file"]))
-            .add_node(WorkflowNode("consolidate", "consolidate", outputs=["insights_merged"]))
-            .add_node(WorkflowNode("index", "index", outputs=["indexed_chunks"]))
-            .add_node(WorkflowNode("search", "search", inputs={"query": "workflow demos", "limit": "3"}, outputs=["results"]))
-            .add_node(WorkflowNode("status", "status", outputs=["status"]))
+            .add_node(WorkflowNode("write_log", "skill://memory-master/write", inputs={"content": "LEARNED: workflow demos make adoption easier"}, outputs=["file"]))
+            .add_node(WorkflowNode("consolidate", "skill://memory-master/consolidate", outputs=["insights_merged"]))
+            .add_node(WorkflowNode("index", "memory://index", outputs=["indexed_chunks"]))
+            .add_node(WorkflowNode("search", "skill://memory-master/search", inputs={"query": "workflow demos", "limit": "3"}, outputs=["results"]))
+            .add_node(WorkflowNode("status", "skill://memory-master/status", outputs=["status"]))
             .add_edge("write_log", "consolidate")
             .add_edge("consolidate", "index")
             .add_edge("index", "search")
@@ -44,7 +44,12 @@ async def main() -> None:
         )
 
         result = await WorkflowEngine(registry.as_dict(), run_store=run_store).execute(pipeline)
-        print(json.dumps({"result": result, "run_state": run_store.load_pipeline_state("memory-demo")}, indent=2, ensure_ascii=False))
+        resumed = await WorkflowEngine(registry.as_dict(), run_store=run_store).execute(pipeline, resume=True)
+        print(json.dumps({
+            "result": result,
+            "resumed": resumed,
+            "run_state": run_store.load_pipeline_state("memory-demo"),
+        }, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

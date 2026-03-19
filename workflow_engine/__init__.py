@@ -3,6 +3,7 @@ from .pipeline import NodeStatus, WorkflowNode, WorkflowPipeline, WorkflowEngine
 from .registry import ActionRegistry
 from .adapters import build_memory_registry, export_memory_actions
 from .persistence import WorkflowRunStore
+from .uri import SkillURIRegistry
 
 __all__ = [
     "WorkflowContext",
@@ -17,4 +18,5 @@ __all__ = [
     "build_memory_registry",
     "export_memory_actions",
     "WorkflowRunStore",
+    "SkillURIRegistry",
 ]

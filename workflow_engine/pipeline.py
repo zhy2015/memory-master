@@ -27,6 +27,8 @@ class WorkflowNode:
     action: str
     inputs: Dict[str, str] = field(default_factory=dict)
     outputs: List[str] = field(default_factory=list)
+    retries: int = 0
+    on_error: str = "fail"
     status: NodeStatus = NodeStatus.PENDING
     result: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
@@ -137,20 +139,37 @@ class WorkflowEngine:
         return result
 
     async def _execute_node(self, node: WorkflowNode, pipeline: WorkflowPipeline) -> None:
-        node.status = NodeStatus.RUNNING
-        try:
-            kwargs = await self._resolve_inputs(node, pipeline)
-            handler = self.uri_registry.resolve(node.action)
-            result = handler(**kwargs) or {}
-            if not isinstance(result, dict):
-                result = {"value": result}
-            for key in node.outputs:
-                if key in result:
-                    await self.context.set(f"{node.node_id}.{key}", result[key])
-            node.result = result
-            node.status = NodeStatus.SUCCESS
-        except Exception as exc:
-            node.error = str(exc)
+        attempt = 0
+        last_error = None
+        while attempt <= node.retries:
+            node.status = NodeStatus.RUNNING
+            try:
+                kwargs = await self._resolve_inputs(node, pipeline)
+                handler = self.uri_registry.resolve(node.action)
+                result = handler(**kwargs) or {}
+                if not isinstance(result, dict):
+                    result = {"value": result}
+                for key in node.outputs:
+                    if key in result:
+                        await self.context.set(f"{node.node_id}.{key}", result[key])
+                node.result = result
+                node.error = None
+                node.status = NodeStatus.SUCCESS
+                return
+            except Exception as exc:
+                last_error = exc
+                node.error = str(exc)
+                attempt += 1
+                if attempt <= node.retries:
+                    continue
+                if node.on_error == "skip":
+                    node.status = NodeStatus.SUCCESS
+                    node.result = {"skipped": True, "error": str(exc)}
+                    return
+                node.status = NodeStatus.FAILED
+                return
+        if last_error is not None:
+            node.error = str(last_error)
             node.status = NodeStatus.FAILED
 
     async def _resolve_inputs(self, node: WorkflowNode, pipeline: WorkflowPipeline) -> Dict[str, Any]:

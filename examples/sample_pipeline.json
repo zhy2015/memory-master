@@ -1,0 +1,38 @@
+{
+  "pipeline_id": "sample-memory-flow",
+  "name": "sample memory flow",
+  "nodes": [
+    {
+      "node_id": "write_log",
+      "action": "skill://memory-master/write",
+      "inputs": {
+        "content": "LEARNED: cli runner makes workflows usable"
+      },
+      "outputs": ["file"]
+    },
+    {
+      "node_id": "consolidate",
+      "action": "skill://memory-master/consolidate",
+      "outputs": ["insights_merged"]
+    },
+    {
+      "node_id": "index",
+      "action": "memory://index",
+      "outputs": ["indexed_chunks"]
+    },
+    {
+      "node_id": "search",
+      "action": "skill://memory-master/search",
+      "inputs": {
+        "query": "cli runner",
+        "limit": "3"
+      },
+      "outputs": ["results"]
+    }
+  ],
+  "edges": [
+    ["write_log", "consolidate"],
+    ["consolidate", "index"],
+    ["index", "search"]
+  ]
+}

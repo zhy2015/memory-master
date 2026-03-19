@@ -1,0 +1,74 @@
+{
+  "name": "memory-master",
+  "description": "记忆管理 skill：自动整理、归档、检索记忆日志，支持上下文整合、提炼与去重",
+  "category": "knowledge",
+  "version": "1.1.0",
+  "execution_type": "python_import",
+  "actions": {
+    "write": {
+      "description": "写入当日日志",
+      "module": "memory_master",
+      "function": "write_daily",
+      "args": {
+        "content": {
+          "type": "string",
+          "description": "日志内容",
+          "required": true
+        }
+      }
+    },
+    "consolidate": {
+      "description": "整合记忆：提取高价值内容，去重，写入核心记忆",
+      "module": "memory_master",
+      "function": "consolidate",
+      "args": {
+        "dry_run": {
+          "type": "boolean",
+          "description": "仅预览，不实际写入",
+          "default": false
+        }
+      }
+    },
+    "archive": {
+      "description": "归档过期日志（>7天）",
+      "module": "memory_master",
+      "function": "archive",
+      "args": {
+        "days": {
+          "type": "integer",
+          "description": "归档阈值天数",
+          "default": 7
+        }
+      }
+    },
+    "search": {
+      "description": "语义搜索记忆",
+      "module": "memory_master",
+      "function": "search",
+      "args": {
+        "query": {
+          "type": "string",
+          "description": "搜索关键词",
+          "required": true
+        },
+        "limit": {
+          "type": "integer",
+          "description": "返回结果数量",
+          "default": 5
+        }
+      }
+    },
+    "index": {
+      "description": "构建向量索引",
+      "module": "memory_master",
+      "function": "build_index",
+      "args": {}
+    },
+    "status": {
+      "description": "查看记忆系统状态",
+      "module": "memory_master",
+      "function": "status",
+      "args": {}
+    }
+  }
+}

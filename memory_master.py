@@ -3,9 +3,10 @@
 Memory Master - 轻量级 AI 记忆管理系统
 
 核心功能：
-1. 分层存储: daily → core → archive
+1. 分层存储: daily → distilled/core → archive
 2. 自动整合: 提取关键信息，去重合并
-3. 语义搜索: 基于向量相似度
+3. 语义搜索: 基于本地可重建索引
+4. Skill-ready: 可被外部工作流直接调用
 """
 
 import json
@@ -28,6 +29,7 @@ class MemoryMaster:
         self.core_dir = self.memory_root / "core"
         self.daily_dir = self.memory_root / "daily"
         self.archive_dir = self.memory_root / "archive"
+        self.distilled_dir = self.memory_root / "distilled"
         self.index_dir = self.memory_root / "index"
         
         # 核心文件
@@ -36,7 +38,7 @@ class MemoryMaster:
         self.processed_record = self.index_dir / "processed_logs.json"
         
         # 确保目录存在
-        for d in [self.core_dir, self.daily_dir, self.archive_dir, self.index_dir]:
+        for d in [self.core_dir, self.daily_dir, self.archive_dir, self.distilled_dir, self.index_dir]:
             d.mkdir(parents=True, exist_ok=True)
     
     def _now(self) -> str:
@@ -194,7 +196,7 @@ class MemoryMaster:
         }
         
         conn = self._init_db()
-        dirs_to_index = [self.daily_dir, self.archive_dir]
+        dirs_to_index = [self.daily_dir, self.archive_dir, self.distilled_dir]
         
         for d in dirs_to_index:
             if not d.exists():
@@ -223,6 +225,7 @@ class MemoryMaster:
         for name, d in [
             ("daily", self.daily_dir),
             ("archive", self.archive_dir),
+            ("distilled", self.distilled_dir),
             ("core", self.core_dir)
         ]:
             if d.exists():
@@ -432,7 +435,7 @@ if __name__ == "__main__":
         print("  write <content>     - 写入日常记忆")
         print("  consolidate         - 整合记忆")
         print("  archive [days]      - 归档旧日志")
-        print("  search <query>      - 搜索记忆")
+        print("  search <query> [limit] - 搜索记忆")
         print("  index               - 构建索引")
         print("  status              - 查看状态")
         sys.exit(1)

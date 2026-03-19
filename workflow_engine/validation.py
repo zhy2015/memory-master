@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Dict, List, Set
 
 
-VALID_ON_ERROR = {"fail", "skip"}
+VALID_ON_ERROR = {"fail", "skip", "continue"}
 
 
 class PipelineValidationError(ValueError):
@@ -17,6 +17,9 @@ def validate_pipeline_data(data: dict) -> None:
         raise PipelineValidationError("Pipeline definition must be an object")
     if not data.get("pipeline_id"):
         raise PipelineValidationError("Missing pipeline_id")
+    pipeline_on_error = data.get("on_error", "fail")
+    if pipeline_on_error not in {"fail", "continue"}:
+        raise PipelineValidationError(f"Invalid pipeline on_error policy: {pipeline_on_error}")
     nodes = data.get("nodes")
     if not isinstance(nodes, list) or not nodes:
         raise PipelineValidationError("Pipeline must define a non-empty nodes list")
@@ -38,6 +41,9 @@ def validate_pipeline_data(data: dict) -> None:
         on_error = node.get("on_error", "fail")
         if on_error not in VALID_ON_ERROR:
             raise PipelineValidationError(f"Node {node_id} has invalid on_error policy: {on_error}")
+        timeout = node.get("timeout")
+        if timeout is not None and not isinstance(timeout, (int, float)):
+            raise PipelineValidationError(f"Node {node_id} has invalid timeout: {timeout}")
 
     for edge in data.get("edges", []):
         if not isinstance(edge, list) or len(edge) != 2:

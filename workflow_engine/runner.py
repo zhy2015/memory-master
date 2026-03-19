@@ -21,7 +21,7 @@ from workflow_engine.validation import validate_pipeline_data
 def load_pipeline(path: str | Path) -> WorkflowPipeline:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     validate_pipeline_data(data)
-    pipeline = WorkflowPipeline(data["pipeline_id"], data.get("name", data["pipeline_id"]))
+    pipeline = WorkflowPipeline(data["pipeline_id"], data.get("name", data["pipeline_id"]), on_error=data.get("on_error", "fail"))
     for node in data.get("nodes", []):
         pipeline.add_node(
             WorkflowNode(
@@ -30,6 +30,7 @@ def load_pipeline(path: str | Path) -> WorkflowPipeline:
                 inputs=node.get("inputs", {}),
                 outputs=node.get("outputs", []),
                 retries=node.get("retries", 0),
+                timeout=node.get("timeout"),
                 on_error=node.get("on_error", "fail"),
             )
         )

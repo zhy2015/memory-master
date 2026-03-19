@@ -28,6 +28,7 @@ class WorkflowNode:
     inputs: Dict[str, str] = field(default_factory=dict)
     outputs: List[str] = field(default_factory=list)
     retries: int = 0
+    timeout: Optional[float] = None
     on_error: str = "fail"
     status: NodeStatus = NodeStatus.PENDING
     result: Dict[str, Any] = field(default_factory=dict)
@@ -40,6 +41,7 @@ class WorkflowPipeline:
     name: str
     nodes: Dict[str, WorkflowNode] = field(default_factory=dict)
     edges: Dict[str, List[str]] = field(default_factory=dict)
+    on_error: str = "fail"
 
     def add_node(self, node: WorkflowNode) -> "WorkflowPipeline":
         self.nodes[node.node_id] = node
@@ -100,6 +102,8 @@ class WorkflowEngine:
             if node.status == NodeStatus.FAILED:
                 if self.run_store is not None:
                     self.run_store.save_pipeline_state(pipeline, event="failed", extra={"node_id": node_id, "error": node.error, "run_id": run_id})
+                if pipeline.on_error == "continue":
+                    continue
                 raise RuntimeError(f"Pipeline failed at node {node_id}: {node.error}")
         result = {nid: node.result for nid, node in pipeline.nodes.items() if node.status == NodeStatus.SUCCESS}
         if self.run_store is not None:
@@ -154,7 +158,10 @@ class WorkflowEngine:
             try:
                 kwargs = await self._resolve_inputs(node, pipeline)
                 handler = self.uri_registry.resolve(node.action)
-                result = handler(**kwargs) or {}
+                if getattr(node, "timeout", None):
+                    result = await asyncio.wait_for(asyncio.to_thread(lambda: handler(**kwargs) or {}), timeout=node.timeout)
+                else:
+                    result = handler(**kwargs) or {}
                 if not isinstance(result, dict):
                     result = {"value": result}
                 for key in node.outputs:

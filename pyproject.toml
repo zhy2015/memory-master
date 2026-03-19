@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memory-master"
+version = "0.1.0"
+description = "Lightweight memory workflow engine and skill-ready memory runtime"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "zhy2015" }
+]
+dependencies = [
+  "numpy>=1.20.0"
+]
+
+[project.scripts]
+memory-master-runner = "workflow_engine.runner:main"
+
+[tool.setuptools]
+py-modules = ["memory_master"]
+
+[tool.setuptools.packages.find]
+include = ["workflow_engine*"]

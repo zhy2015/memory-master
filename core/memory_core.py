@@ -12,8 +12,8 @@ from daemon.memory_master_daemon import MemoryMasterDaemon
 
 
 class MemoryCore:
-    def __init__(self, workspace_root: str = "/root/.openclaw/workspace"):
-        self.workspace_root = Path(workspace_root)
+    def __init__(self, workspace_root="."):
+        self.workspace_root = Path(workspace_root).resolve()
         self.daemon = MemoryMasterDaemon(self.workspace_root)
 
     def status(self) -> Dict[str, Any]:

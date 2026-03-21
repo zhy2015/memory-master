@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 CONFIG = Path(os.environ.get('OPENCLAW_CONFIG', '/root/.openclaw/openclaw.json'))
-EXPECTED_WORKSPACE = os.environ.get('OPENCLAW_WORKSPACE', '/root/.openclaw/workspace')
+EXPECTED_WORKSPACE = os.environ.get('OPENCLAW_WORKSPACE', str(Path.cwd()))
 
 
 def fail(msg, code=1):

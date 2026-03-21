@@ -7,13 +7,19 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from contracts.skill_contracts import ExecutionResult, GlobalContext, ISkill, ToolSchema
+from contracts.skill_contracts import ExecutionResult, GlobalContext, ISkill, SkillDescriptor, ToolSchema
 from core.memory_core import MemoryCore
 
 
 class MemorySkillAdapter(ISkill):
     name = "system_memory"
     description = "Provides long-term memory maintenance and recall capabilities."
+    task_nodes = ["memory", "automation"]
+    tags = ["memory", "recall", "archive"]
+    category = "memory"
+    visibility = "public"
+    status = "active"
+    owner = "harry-bot"
 
     def __init__(self, memory_core: MemoryCore | None = None):
         self.memory_core = memory_core or MemoryCore()
@@ -24,6 +30,18 @@ class MemorySkillAdapter(ISkill):
 
     def shutdown(self) -> None:
         return None
+
+    def get_descriptor(self) -> SkillDescriptor:
+        return SkillDescriptor(
+            name=self.name,
+            description=self.description,
+            task_nodes=list(self.task_nodes),
+            tags=list(self.tags),
+            category=self.category,
+            visibility=self.visibility,
+            status=self.status,
+            owner=self.owner,
+        )
 
     def get_tool_schemas(self) -> List[ToolSchema]:
         return [

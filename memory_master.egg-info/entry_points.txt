@@ -1,0 +1,2 @@
+[console_scripts]
+memory-master-runner = workflow_engine.runner:main

@@ -1,7 +1,7 @@
-"""Local copy of the narrow governance/adapter contract used by memory-master.
+"""Local mirror of the governance foundation contract.
 
-This keeps the adapter runnable and testable inside the standalone repository
-without depending on workspace-specific package layout.
+This repository keeps a vendored copy so it remains runnable standalone,
+while staying structurally aligned with skill-governance.
 """
 
 from __future__ import annotations
@@ -40,6 +40,33 @@ class GlobalContext:
     logger: Any = None
     telemetry: Any = None
     storage: Any = None
+
+
+@dataclass(frozen=True)
+class SkillDescriptor:
+    name: str
+    description: str
+    task_nodes: List[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
+    category: str | None = None
+    visibility: str = "public"
+    status: str = "experimental"
+    owner: str | None = None
+
+
+@dataclass(frozen=True)
+class TaskContext:
+    task_node: str | None
+    intent: str
+    channel: str | None = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class SkillCandidate:
+    descriptor: SkillDescriptor
+    score: float
+    reason: str
 
 
 @runtime_checkable

@@ -25,3 +25,4 @@ Search memory first when the request is about:
 - Keep execution logs out of long-term memory
 - Keep startup on routing, not full recall
 - Project-specific details belong in project memory/manuals, not startup path
+- Memory routing is a domain concern; cross-skill governance belongs to `skill-governance`, not to memory startup rules.

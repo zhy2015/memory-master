@@ -27,8 +27,9 @@ class MemoryMasterDaemon:
     4. 归档：将过期日志移至 archive/
     """
     
-    def __init__(self):
-        self.memory_root = Path("/root/.openclaw/workspace/memory")
+    def __init__(self, workspace_root: str | Path = "/root/.openclaw/workspace"):
+        workspace_root = Path(workspace_root)
+        self.memory_root = workspace_root / "memory"
         self.core_dir = self.memory_root / "core"
         self.daily_dir = self.memory_root / "daily"
         self.archive_dir = self.memory_root / "archive"

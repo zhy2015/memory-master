@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
+"""Local ops check for this deployment's memory configuration.
+
+This script is intentionally environment-specific and should not be treated as a
+repository-generic health check.
+"""
+
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-CONFIG = Path('/root/.openclaw/openclaw.json')
-EXPECTED_WORKSPACE = '/root/.openclaw/workspace'
+CONFIG = Path(os.environ.get('OPENCLAW_CONFIG', '/root/.openclaw/openclaw.json'))
+EXPECTED_WORKSPACE = os.environ.get('OPENCLAW_WORKSPACE', '/root/.openclaw/workspace')
 
 
 def fail(msg, code=1):
@@ -28,7 +35,7 @@ mem_search = obj.get('agents', {}).get('defaults', {}).get('memorySearch', {})
 provider = mem_search.get('provider')
 fallback = mem_search.get('fallback')
 chat_base = obj.get('models', {}).get('providers', {}).get('openai', {}).get('baseUrl')
-expected_chat_base = 'https://ai.td.ee/v1'
+expected_chat_base = os.environ.get('OPENCLAW_EXPECTED_BASEURL', 'https://ai.td.ee/v1')
 
 if workspace != EXPECTED_WORKSPACE:
     fail(f'workspace drift: {workspace!r} != {EXPECTED_WORKSPACE!r}')

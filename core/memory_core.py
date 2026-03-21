@@ -8,13 +8,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 
-from .memory_master_daemon import MemoryMasterDaemon
+from daemon.memory_master_daemon import MemoryMasterDaemon
 
 
 class MemoryCore:
     def __init__(self, workspace_root: str = "/root/.openclaw/workspace"):
         self.workspace_root = Path(workspace_root)
-        self.daemon = MemoryMasterDaemon()
+        self.daemon = MemoryMasterDaemon(self.workspace_root)
 
     def status(self) -> Dict[str, Any]:
         return {
@@ -25,8 +25,8 @@ class MemoryCore:
         }
 
     def consolidate(self) -> Dict[str, Any]:
-        processed = self.daemon.run_daily_processing(dry_run=False)
-        return {"processed": processed}
+        result = self.daemon.run_daily_maintenance()
+        return {"processed": result}
 
     def search(self, query: str) -> Dict[str, Any]:
         # Placeholder: keep domain API boundary now; real search backend can plug in later.

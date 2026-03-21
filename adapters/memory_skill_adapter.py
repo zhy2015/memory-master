@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from core.infra.skill_contracts import ExecutionResult, GlobalContext, ISkill, ToolSchema
-from memory.core.memory_core import MemoryCore
+from contracts.skill_contracts import ExecutionResult, GlobalContext, ISkill, ToolSchema
+from core.memory_core import MemoryCore
 
 
 class MemorySkillAdapter(ISkill):

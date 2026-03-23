@@ -140,15 +140,22 @@ class MemoryMaster:
             "archived_count": 0,
             "archived_files": []
         }
-        
-        cutoff = datetime.now() - timedelta(days=days)
+
+        if days < 0:
+            result["status"] = "error"
+            result["message"] = "days must be >= 0"
+            return result
+
+        today = datetime.now().date()
+        cutoff_date = today - timedelta(days=days)
         
         for f in self.daily_dir.glob("*.md"):
             date_str = self._extract_date(f.name)
             if date_str != "unknown":
                 try:
-                    file_date = datetime.strptime(date_str, "%Y-%m-%d")
-                    if file_date < cutoff:
+                    file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    # 永不归档今天；其余仅归档严格早于 cutoff 的历史文件
+                    if file_date != today and file_date < cutoff_date:
                         dest = self.archive_dir / f.name
                         shutil.move(str(f), str(dest))
                         result["archived_count"] += 1
@@ -187,6 +194,12 @@ class MemoryMaster:
         result["message"] = f"Found {len(results)} results"
         return result
     
+    def recall(self, query: str, limit: int = 5) -> Dict:
+        """兼容生产接入的 recall API，当前委托给 search。"""
+        result = self.search(query=query, limit=limit)
+        result["action"] = "recall"
+        return result
+
     def build_index(self) -> Dict:
         """构建向量索引"""
         result = {
